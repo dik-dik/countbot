@@ -1,18 +1,14 @@
 <?php
-
-$token = $_POST['token'];
-
-// if($token != 'xxxxxxxxx'){ #replace this with the token from your slash command configuration page
-//   $msg = "The token for the slash command doesn't match. Check your script.";
-//   die($msg);
-//   echo $msg;
-// }
-
-
 ini_set('display_errors', 1);
 require_once('common.php');
 
+$token = $_POST['token'];
 
+if($token != $settings['token']){
+  $msg = "The token for the slash command doesn't match. Check your script.";
+  die($msg);
+  echo $msg;
+}
 
 
 $reply ="";
@@ -37,6 +33,7 @@ echo json_encode($result, true);    // <--- encode
 // Save the data
 $filename = 'data.txt';
 finishHim($filename,$arr);
+
 
 exit();
 
