@@ -1,4 +1,4 @@
-# countbot
+# realcount.club
 
 * *index.php* displays the current counts and stats for POTUS, RDT, and VP
 * *slack.php* returns a slack-friendly JSON response with the current counts when called
