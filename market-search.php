@@ -3,7 +3,13 @@
 $token = $_POST['token'];
 $text = $_POST['text'];
 
-// if($token != 'xxxxxxxxxxxxxxxxxxx'){ #replace this with the token from your slash command configuration page
+if (isset($_GET['test']))
+{
+	$text = $_GET['test'];
+}
+
+
+// if($token != 'nK4MSN1RH2SxjoJhn18CkjzY'){ #replace this with the token from your slash command configuration page
 //   $msg = "The token for the slash command doesn't match. Check your script.";
 //   die($msg);
 //   echo $msg;
@@ -24,14 +30,15 @@ foreach($pi_data->Markets as $item) {
 		$subitem->Change = $subitem->LastTradePrice - $subitem->LastClosePrice;
 	if (stripos($item->Name . $subitem->Name . $item->TickerSymbol . $subitem->TickerSymbol . $item->ShortName . $item->LongName, $text) !== false)
 	{
-		$reply = $reply . "\n<" . $item->URL . "|" . $subitem->TickerSymbol . ">     Last: " . number_format ($subitem->LastTradePrice, 2). "  ";
+		$reply = $reply . "\n<" . "https://www.predictit.org/Contract/".$subitem->ID . "/|" . $subitem->TickerSymbol . ">     Last: " . number_format ($subitem->LastTradePrice, 2)." ";
 		if ($subitem->Change > 0) {
 			$reply = $reply . "↑" . number_format($subitem->Change, 2);
 		} elseif ($subitem->Change == 0 ) {
-			$reply = $reply . "NC";
+			$reply = $reply . "   NC  ";
 		} elseif ($subitem->Change < 0 ) {
 			$reply = $reply . "↓" . number_format(-1 * $subitem->Change, 2);
 		}
+		$reply = $reply . "     Buy Yes: ".number_format($subitem->BestBuyYesCost, 2)."     Sell Yes: ".number_format($subitem->BestSellYesCost, 2);
 	}}
 }
 
