@@ -18,7 +18,9 @@ $pi_data = json_decode($pi_json_file);
 
 ?>
 
-<html><head><script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+<html>
+<meta name="referrer" content="no-referrer">
+<head><script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">  
     <title>All PI Markets</title>

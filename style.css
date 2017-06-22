@@ -1,0 +1,69 @@
+body {
+	font-family: sans-serif;
+	text-align: center;
+}
+h2, form, input[type="number"] {
+	font-family: "Comic Sans MS", sans-serif;
+	color: #f441be;
+	font-size: 1.5em;
+	font-weight: bold;
+}
+
+h3 {
+	color: green;
+	padding: 0;
+}
+
+input[type="number"] {
+	text-align: right;
+	font-size: 1em;
+	width: 2.5em;
+}
+form.expect, input[type="number"].expect {
+	font-family: sans-serif;
+	color: black;
+	font-size: 1em;
+	font-weight: normal;
+}
+input[type="number"]:not(.expect) {
+	padding: 0;
+	border: 0;
+}
+
+input {
+	text-align:right;
+}
+a {
+	text-decoration: none
+}
+a.title:link,
+a.title:visited {
+	color: #4286f4
+}
+a.thecount:link,
+a.thecount:visited {
+	color: green
+}
+a.thecount:hover,
+a.title:hover {
+	color: #a8088d
+}
+div.whole {
+	/*        display: flex;
+	justify-content: center;*/
+}
+div.blok {
+	padding: 0 2.7em 1em;
+	display: inline-block;
+	vertical-align: top;
+}
+.nomobile {
+	display: none
+}
+@media screen and (min-width: 700px) {
+	.nomobile {
+		clear: both;
+		display: block
+	}
+
+}

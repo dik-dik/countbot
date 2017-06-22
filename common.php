@@ -25,16 +25,16 @@ function getTotalDays(DateInterval $int){
 //Grab the Twitter data
 $url = 'https://api.twitter.com/1.1/statuses/user_timeline.json';
 
-// $arr['VP2']['updated'] = false;
-// $arr['VP1']['updated'] = false;
-// $arr['VP1']['link'] = "https://www.predictit.org/Market/3270/How-many-tweets-will-%40vp-post-from-noon-May-12-to-noon-May-19";
-
-
 $links = array_column($arr, "link");
+
+$arr['POTUS']['handle'] = "potus";
+$arr['VP-Fri']['handle'] = "vp";
+$arr['VP-Tue']['handle'] = "vp";
+
 foreach ($arr as $key => $value) {
-	$handle =  preg_replace("/[^a-zA-Z]+/", "", $key);
-	$arr[$key]['handle'] = $handle;
-	if ($arr[$key]['updated'] !== true) {
+	$handle =  $arr[$key]['handle'];
+#	$arr[$key]['updated'] = false;
+	if ($arr[$key]['updated'] == false) {
 		$pi_json_file = file_get_contents('https://www.predictit.org/api/marketdata/group/83');
 		$pi_data = json_decode($pi_json_file);
 		$pisearch = 'How many tweets will @'.$handle;
@@ -43,7 +43,7 @@ foreach ($arr as $key => $value) {
 			if (strpos(strtolower($item->Name), strtolower($pisearch)) !== false)
 			{
 				if (array_search($item->URL, $links) == false) {
-					echo ("updated url for ").$key;
+					echo ("updated url for ").$key."\n";
 					$arr[$key]['updated'] = true;
 					$arr[$key]['marketID'] = $item->ID;
 					$arr[$key]['link'] = $item->URL;
@@ -56,6 +56,7 @@ foreach ($arr as $key => $value) {
 					foreach($item->Contracts as $MarketContract)
 					{
 						$arr[$key]['close'] = $MarketContract->DateEnd."-04:00";
+						$arr[$key]['close'] = date_create($arr[$key]['close']);
 					}
 				}
 				elseif ($item->Status == "Open" && $arr[$key]['marketID'] == $item->ID) {
@@ -64,6 +65,49 @@ foreach ($arr as $key => $value) {
 				
 			}
 		}
+	
+	
+	
+	
+	
+		$searchstring = 'Will @'.$handle.' post ';
+
+		foreach($pi_data->Markets as $item)
+		{
+			if($item->ID == $arr[$key]['marketID'])
+			{
+				foreach($item->Contracts as $MarketContract)
+				{
+					if(strpos($MarketContract->LongName,$searchstring)!== false)
+					{
+						if(strpos($MarketContract->LongName,"or fewer")!== false)
+						{
+							$pattern = "/post.(\d+).or.fewer/";
+							preg_match($pattern,$MarketContract->LongName,$matches);
+							$arr[$key]['B1']= $matches[1];
+							print $key." B1: ";
+							print $arr[$key]['B1'];
+							print"\n";
+						}
+						if(strpos($MarketContract->LongName,"or more")!== false)
+						{
+							$pattern = "/post.(\d+).or.more/";
+							preg_match($pattern,$MarketContract->LongName,$matches);
+							$arr[$key]['Blast']= $matches[1];
+							print $key." Blast: ";
+							print $arr[$key]['Blast'];
+							print"\n";
+						}
+					}
+				}
+			}
+
+		}
+	
+	
+	
+	
+	
 	}
 	$getfield = '?screen_name='.$handle.'&count=1';
 	$requestMethod = 'GET';
@@ -71,8 +115,13 @@ foreach ($arr as $key => $value) {
 	$string = json_decode($twitter->setGetfield($getfield)
 	             ->buildOauth($url, $requestMethod)
 	             ->performRequest(),$assoc = TRUE);
-	$arr[$key]['total'] = $string[0]['user']['statuses_count'];
-	$arr[$key]['close'] = date_create($value['close']);
+	if (isset($string[0]['user']['statuses_count'])){
+		$arr[$key]['last_tweet_url'] = "https://twitter.com/".$handle."/status/".$string[0]['id_str'];
+		$arr[$key]['last_tweet_time'] = date_create($string[0]['created_at']);
+		$arr[$key]['total'] = $string[0]['user']['statuses_count'];
+	}
+	$arr[$key]['last_tweet_age'] = $now->diff($arr[$key]['last_tweet_time']);
+#	$arr[$key]['close'] = date_create($value['close']);
 	// Check if we need to reset the number
 	if ($now > $arr[$key]['close']) {
 		$arr[$key]['close'] = $arr[$key]['close']->add(DateInterval::createFromDateString('7 days'));
@@ -88,21 +137,22 @@ foreach ($arr as $key => $value) {
 	$arr[$key]['days'] = getTotalDays($arr[$key]['elapsed']);
 	$arr[$key]['days_remaining'] = 7-$arr[$key]['days'];
 	$arr[$key]['hours']	= getTotalHours($arr[$key]['elapsed']);
-	$arr[$key]['rate'] = $arr[$key]['count']/$arr[$key]['hours'];
+	$arr[$key]['hours']	= getTotalHours($arr[$key]['elapsed']);
+	if($arr[$key]['hours']>0){
+		$arr[$key]['rate'] = $arr[$key]['count']/$arr[$key]['hours'];
+	}
+	else{
+		$arr[$key]['rate']=$arr[$key]['count']/168;
+	}
 	$arr[$key]['pace'] = $arr[$key]['rate'] * 168;
-	$arr[$key]['nextpace'] = ($arr[$key]['count']+1)/$arr[$key]['hours']* 168;
-	$arr[$key]['silentpace'] = ($arr[$key]['count'])/($arr[$key]['hours']+min(1, getTotalHours($arr[$key]['remaining'])))* 168;
-	$arr[$key]['silent12pace'] = ($arr[$key]['count'])/($arr[$key]['hours']+min(12, getTotalHours($arr[$key]['remaining'])))* 168;
-	$arr[$key]['silent24pace'] = ($arr[$key]['count'])/($arr[$key]['hours']+min(24, getTotalHours($arr[$key]['remaining'])))* 168;
+	$arr[$key]['nextpace'] = (($arr[$key]['rate']*$arr[$key]['hours'])+1)/$arr[$key]['hours']* 168;
+	$arr[$key]['silentpace'] = ($arr[$key]['rate']*$arr[$key]['hours'])/($arr[$key]['hours']+min(1, getTotalHours($arr[$key]['remaining'])))* 168;
+	$arr[$key]['silent12pace'] = ($arr[$key]['rate']*$arr[$key]['hours'])/($arr[$key]['hours']+min(12, getTotalHours($arr[$key]['remaining'])))* 168;
+	$arr[$key]['silent24pace'] = ($arr[$key]['rate']*$arr[$key]['hours'])/($arr[$key]['hours']+min(24, getTotalHours($arr[$key]['remaining'])))* 168;
 }
 
-
-
 function finishHim($filename,$arr){
-	foreach ($arr as $key => $value) {
-		#echo $value['close'];
-		$arr[$key]['close'] = date("c", strtotime(date_format($arr[$key]['close'],"Y/m/d H:i:s T")));
-	}
+	
 	$content = serialize($arr);
 
 	$data = array('potusnum'=> $arr['POTUS']['num'], 'rdtnum' => $arr['realDonaldTrump']['num'], 'vpnum' => $arr['VP1']['num'], 'potuslink'=> $arr['POTUS']['link'], 'rdtlink' => $arr['realDonaldTrump']['link'], 'vplink' => $arr['VP1']['link'], 'potusclose'=> $arr['POTUS']['close'], 'rdtclose' => $arr['realDonaldTrump']['close'], 'vpclose' => $arr['VP1']['close']);
